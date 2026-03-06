@@ -1,8 +1,5 @@
 name: postman-api-onboarding-action
-description: Public beta action contract for Postman API onboarding orchestration.
-runs:
-  using: node20
-  main: dist/index.js
+description: Public beta composite action that orchestrates Postman bootstrap and repo sync.
 inputs:
   project-name:
     description: Service project name used across bootstrap and repo sync phases.
@@ -15,6 +12,9 @@ inputs:
     required: false
   requester-email:
     description: Requester email used for workspace membership.
+    required: false
+  workspace-admin-user-ids:
+    description: Comma-separated workspace admin user ids.
     required: false
   spec-url:
     description: URL to the OpenAPI document to bootstrap.
@@ -29,6 +29,10 @@ inputs:
     default: '{}'
   governance-mapping-json:
     description: JSON map of business domain to governance group name.
+    required: false
+    default: '{}'
+  env-runtime-urls-json:
+    description: JSON map of environment slug to runtime base URL.
     required: false
     default: '{}'
   postman-api-key:
@@ -51,6 +55,17 @@ inputs:
     description: Repo mutation mode for generated assets and workflow files.
     required: false
     default: commit-and-push
+  current-ref:
+    description: Explicit ref override for detached checkout push semantics.
+    required: false
+  committer-name:
+    description: Commit author name for generated sync commits.
+    required: false
+    default: Postman FDE
+  committer-email:
+    description: Commit author email for generated sync commits.
+    required: false
+    default: fde@postman.com
   integration-backend:
     description: Integration backend used to coordinate onboarding phases.
     required: false
@@ -58,23 +73,76 @@ inputs:
 outputs:
   integration-backend:
     description: Resolved integration backend for the onboarding run.
+    value: ${{ inputs.integration-backend }}
   workspace-id:
     description: Postman workspace ID.
+    value: ${{ steps.bootstrap.outputs.workspace-id }}
   workspace-url:
     description: Postman workspace URL.
+    value: ${{ steps.bootstrap.outputs.workspace-url }}
   spec-id:
     description: Uploaded Postman spec ID.
+    value: ${{ steps.bootstrap.outputs.spec-id }}
   collections-json:
     description: JSON summary of generated collections.
+    value: ${{ steps.bootstrap.outputs.collections-json }}
   environment-uids-json:
     description: JSON map of environment slug to Postman environment uid.
+    value: ${{ steps.repo_sync.outputs.environment-uids-json }}
   mock-url:
     description: Mock server URL.
+    value: ${{ steps.repo_sync.outputs.mock-url }}
   monitor-id:
     description: Smoke monitor ID.
+    value: ${{ steps.repo_sync.outputs.monitor-id }}
   repo-sync-summary-json:
     description: JSON summary of repo materialization and workspace sync planning.
+    value: ${{ steps.repo_sync.outputs.repo-sync-summary-json }}
   commit-sha:
-    description: Commit SHA placeholder for repo-write-mode.
-  orchestration-summary:
-    description: Human-readable summary of the onboarding orchestration plan.
+    description: Commit SHA produced by repo-write-mode.
+    value: ${{ steps.repo_sync.outputs.commit-sha }}
+runs:
+  using: composite
+  steps:
+    - id: bootstrap
+      name: Bootstrap Postman Assets
+      uses: postman-cs/postman-bootstrap-action@v0
+      with:
+        project-name: ${{ inputs.project-name }}
+        domain: ${{ inputs.domain }}
+        domain-code: ${{ inputs.domain-code }}
+        requester-email: ${{ inputs.requester-email }}
+        workspace-admin-user-ids: ${{ inputs.workspace-admin-user-ids }}
+        spec-url: ${{ inputs.spec-url }}
+        environments-json: ${{ inputs.environments-json }}
+        system-env-map-json: ${{ inputs.system-env-map-json }}
+        governance-mapping-json: ${{ inputs.governance-mapping-json }}
+        postman-api-key: ${{ inputs.postman-api-key }}
+        postman-access-token: ${{ inputs.postman-access-token }}
+        github-token: ${{ inputs.github-token }}
+        gh-fallback-token: ${{ inputs.gh-fallback-token }}
+        github-auth-mode: ${{ inputs.github-auth-mode }}
+        integration-backend: ${{ inputs.integration-backend }}
+    - id: repo_sync
+      name: Sync Repository and Workspace
+      uses: postman-cs/postman-repo-sync-action@v0
+      with:
+        project-name: ${{ inputs.project-name }}
+        workspace-id: ${{ steps.bootstrap.outputs.workspace-id }}
+        baseline-collection-id: ${{ steps.bootstrap.outputs.baseline-collection-id }}
+        smoke-collection-id: ${{ steps.bootstrap.outputs.smoke-collection-id }}
+        contract-collection-id: ${{ steps.bootstrap.outputs.contract-collection-id }}
+        environments-json: ${{ inputs.environments-json }}
+        system-env-map-json: ${{ inputs.system-env-map-json }}
+        environment-uids-json: '{}'
+        env-runtime-urls-json: ${{ inputs.env-runtime-urls-json }}
+        repo-write-mode: ${{ inputs.repo-write-mode }}
+        current-ref: ${{ inputs.current-ref }}
+        committer-name: ${{ inputs.committer-name }}
+        committer-email: ${{ inputs.committer-email }}
+        postman-api-key: ${{ inputs.postman-api-key }}
+        postman-access-token: ${{ inputs.postman-access-token }}
+        github-token: ${{ inputs.github-token }}
+        gh-fallback-token: ${{ inputs.gh-fallback-token }}
+        github-auth-mode: ${{ inputs.github-auth-mode }}
+        integration-backend: ${{ inputs.integration-backend }}

@@ -1,108 +1,87 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
 
-import {
-  ACTION_CONTRACT,
-  DEFAULT_INTEGRATION_BACKEND,
-  ORCHESTRATION_PHASES,
-} from '../src/contracts';
-import { buildActionPlan } from '../src/index';
+import { parse } from 'yaml';
+import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..');
 
-describe('public beta contract', () => {
-  it('defines the onboarding action as the primary external entrypoint', () => {
-    expect(ACTION_CONTRACT.name).toBe('postman-api-onboarding-action');
-    expect(ACTION_CONTRACT.entrypoint).toBe('postman-api-onboarding-action');
-    expect(DEFAULT_INTEGRATION_BACKEND).toBe('bifrost');
-    expect(ORCHESTRATION_PHASES).toEqual(['bootstrap', 'repo-sync']);
+type Step = {
+  id?: string;
+  name?: string;
+  uses?: string;
+  with?: Record<string, string>;
+};
+
+type ActionManifest = {
+  runs: {
+    using: string;
+    steps: Step[];
+  };
+  inputs: Record<string, { default?: string; required?: boolean }>;
+  outputs: Record<string, { value: string }>;
+};
+
+function loadManifest(): ActionManifest {
+  return parse(
+    readFileSync(path.join(repoRoot, 'action.yml'), 'utf8')
+  ) as ActionManifest;
+}
+
+describe('postman-api-onboarding-action composite contract', () => {
+  it('is a composite action and defaults integration-backend to bifrost', () => {
+    const manifest = loadManifest();
+
+    expect(manifest.runs.using).toBe('composite');
+    expect(manifest.inputs['integration-backend']?.default).toBe('bifrost');
   });
 
-  it('uses the agreed kebab-case inputs and outputs in action.yml', () => {
-    const actionManifest = readFileSync(path.join(repoRoot, 'action.yml'), 'utf8');
+  it('uses the postman-cs bootstrap and repo-sync actions as steps', () => {
+    const manifest = loadManifest();
+    const steps = manifest.runs.steps;
 
-    expect(actionManifest).toContain('project-name:');
-    expect(actionManifest).toContain('spec-url:');
-    expect(actionManifest).toContain('environments-json:');
-    expect(actionManifest).toContain('governance-mapping-json:');
-    expect(actionManifest).toContain('repo-write-mode:');
-    expect(actionManifest).toContain('integration-backend:');
-    expect(actionManifest).toContain('workspace-id:');
-    expect(actionManifest).toContain('workspace-url:');
-    expect(actionManifest).toContain('spec-id:');
-    expect(actionManifest).toContain('environment-uids-json:');
-    expect(actionManifest).toContain('commit-sha:');
-    expect(actionManifest).toContain('orchestration-summary:');
+    expect(steps).toHaveLength(2);
+    expect(steps[0]?.id).toBe('bootstrap');
+    expect(steps[0]?.uses).toBe('postman-cs/postman-bootstrap-action@v0');
+    expect(steps[1]?.id).toBe('repo_sync');
+    expect(steps[1]?.uses).toBe('postman-cs/postman-repo-sync-action@v0');
   });
 
-  it('builds a minimal orchestration plan over bootstrap and repo sync', () => {
-    const plan = buildActionPlan({
-      'project-name': 'core-payments',
-      'domain-code': 'AF',
-      'spec-url': 'https://example.com/openapi.yaml',
-      'postman-api-key': 'pmak-test',
-    });
+  it('maps bootstrap outputs explicitly into repo-sync inputs', () => {
+    const manifest = loadManifest();
+    const repoSyncStep = manifest.runs.steps.find((step) => step.id === 'repo_sync');
 
-    expect(plan.name).toBe('postman-api-onboarding-action');
-    expect(plan.integrationBackend).toBe('bifrost');
-    expect(plan.phases).toEqual([
-      { name: 'bootstrap', enabled: true },
-      { name: 'repo-sync', enabled: true },
-    ]);
-    expect(plan.outputs).toEqual({
-      'integration-backend': 'bifrost',
-      'workspace-id': '',
-      'workspace-url': '',
-      'spec-id': '',
-      'collections-json': JSON.stringify({
-        baseline: '',
-        smoke: '',
-        contract: '',
-      }),
-      'environment-uids-json': '{}',
-      'mock-url': '',
-      'monitor-id': '',
-      'repo-sync-summary-json': JSON.stringify({
-        repoWriteMode: 'commit-and-push',
-        environmentsJson: '["prod"]',
-        workspaceName: '[AF] core-payments',
-      }),
-      'commit-sha': '',
-      'orchestration-summary': 'bootstrap -> repo-sync via bifrost',
-    });
+    expect(repoSyncStep?.with?.['workspace-id']).toBe(
+      '${{ steps.bootstrap.outputs.workspace-id }}'
+    );
+    expect(repoSyncStep?.with?.['baseline-collection-id']).toBe(
+      '${{ steps.bootstrap.outputs.baseline-collection-id }}'
+    );
+    expect(repoSyncStep?.with?.['smoke-collection-id']).toBe(
+      '${{ steps.bootstrap.outputs.smoke-collection-id }}'
+    );
+    expect(repoSyncStep?.with?.['contract-collection-id']).toBe(
+      '${{ steps.bootstrap.outputs.contract-collection-id }}'
+    );
   });
 
-  it('keeps the agreed partner-facing input and output contract', () => {
-    expect(Object.keys(ACTION_CONTRACT.inputs)).toEqual([
-      'project-name',
-      'domain',
-      'domain-code',
-      'requester-email',
-      'spec-url',
-      'environments-json',
-      'system-env-map-json',
-      'governance-mapping-json',
-      'postman-api-key',
-      'postman-access-token',
-      'github-token',
-      'gh-fallback-token',
-      'github-auth-mode',
-      'repo-write-mode',
-      'integration-backend',
-    ]);
-    expect(Object.keys(ACTION_CONTRACT.outputs)).toEqual([
-      'integration-backend',
-      'workspace-id',
-      'workspace-url',
-      'spec-id',
-      'collections-json',
-      'environment-uids-json',
-      'mock-url',
-      'monitor-id',
-      'repo-sync-summary-json',
-      'commit-sha',
-      'orchestration-summary',
-    ]);
+  it('surfaces final outputs from bootstrap and repo-sync steps', () => {
+    const manifest = loadManifest();
+
+    expect(manifest.outputs['workspace-id']?.value).toBe(
+      '${{ steps.bootstrap.outputs.workspace-id }}'
+    );
+    expect(manifest.outputs['collections-json']?.value).toBe(
+      '${{ steps.bootstrap.outputs.collections-json }}'
+    );
+    expect(manifest.outputs['environment-uids-json']?.value).toBe(
+      '${{ steps.repo_sync.outputs.environment-uids-json }}'
+    );
+    expect(manifest.outputs['repo-sync-summary-json']?.value).toBe(
+      '${{ steps.repo_sync.outputs.repo-sync-summary-json }}'
+    );
+    expect(manifest.outputs['commit-sha']?.value).toBe(
+      '${{ steps.repo_sync.outputs.commit-sha }}'
+    );
   });
 });
