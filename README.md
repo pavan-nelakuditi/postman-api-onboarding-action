@@ -64,6 +64,40 @@ jobs:
           postman-api-key: ${{ secrets.POSTMAN_API_KEY }}
 ```
 
+Even when reusing an existing `spec-id`, the composite action still requires `spec-url` because the bootstrap step updates the existing Spec Hub asset from that source of truth.
+
+## Inputs
+
+| Input | Default | Notes |
+| --- | --- | --- |
+| `workspace-id` | | Reuse an existing Postman workspace through the bootstrap step. |
+| `spec-id` | | Update an existing Postman spec instead of creating a new one. |
+| `baseline-collection-id` | | Reuse an existing baseline collection. |
+| `smoke-collection-id` | | Reuse an existing smoke collection. |
+| `contract-collection-id` | | Reuse an existing contract collection. |
+| `generate-ci-workflow` | `true` | Pass through to repo sync; set `false` for repos that already manage CI. |
+| `ci-workflow-path` | `.github/workflows/ci.yml` | Pass through to repo sync to redirect generated workflow output. |
+| `project-name` | | Service name used across bootstrap and repo sync. |
+| `domain` | | Business domain used for governance assignment. |
+| `domain-code` | | Short prefix used in workspace naming. |
+| `requester-email` | | Optional workspace invite target. |
+| `workspace-admin-user-ids` | | Optional comma-separated workspace admin IDs. |
+| `spec-url` | | Required registry-backed OpenAPI document URL. |
+| `environments-json` | `["prod"]` | Environment slugs to materialize downstream. |
+| `system-env-map-json` | `{}` | Map of environment slug to system environment ID. |
+| `governance-mapping-json` | `{}` | Map of domain to governance group name. |
+| `env-runtime-urls-json` | `{}` | Map of environment slug to runtime base URL. |
+| `postman-api-key` | | Required for bootstrap and repo sync Postman operations. |
+| `postman-access-token` | | Enables governance assignment and Bifrost integration work. |
+| `github-token` | | Enables repository variable persistence and generated commits. |
+| `gh-fallback-token` | | Optional fallback token for workflow and variable APIs. |
+| `github-auth-mode` | `github_token_first` | GitHub auth mode for repository APIs. |
+| `repo-write-mode` | `commit-and-push` | Repo mutation mode passed to repo sync. |
+| `current-ref` | | Optional explicit ref override for detached checkouts. |
+| `committer-name` | `Postman FDE` | Commit author name for generated sync commits. |
+| `committer-email` | `fde@postman.com` | Commit author email for generated sync commits. |
+| `integration-backend` | `bifrost` | Current public beta backend. |
+
 ## Output Mapping
 
 The composite action wires:
