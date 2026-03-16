@@ -60,10 +60,13 @@ inputs:
     required: false
     default: '{}'
   postman-api-key:
-    description: Postman API key used for bootstrap and sync operations.
-    required: true
+    description: Postman API key used for bootstrap and sync operations. If omitted or invalid, a new key is generated from postman-access-token by the underlying actions.
+    required: false
   postman-access-token:
     description: Postman access token used for Bifrost and governance integration.
+    required: false
+  postman-team-id:
+    description: Explicit Postman team ID. Auto-derived from postman-api-key via /me when omitted.
     required: false
   github-token:
     description: GitHub token used for repo variables and generated commits.
@@ -135,6 +138,8 @@ runs:
     - id: bootstrap
       name: Bootstrap Postman Assets
       uses: postman-cs/postman-bootstrap-action@v0
+      env:
+        POSTMAN_TEAM_ID: ${{ inputs.postman-team-id }}
       with:
         project-name: ${{ inputs.project-name }}
         workspace-id: ${{ inputs.workspace-id }}
@@ -159,6 +164,8 @@ runs:
     - id: repo_sync
       name: Sync Repository and Workspace
       uses: postman-cs/postman-repo-sync-action@v0
+      env:
+        POSTMAN_TEAM_ID: ${{ inputs.postman-team-id }}
       with:
         project-name: ${{ inputs.project-name }}
         workspace-id: ${{ steps.bootstrap.outputs.workspace-id }}
@@ -185,6 +192,8 @@ runs:
       if: inputs.enable-insights == 'true'
       name: Onboard Postman Insights
       uses: postman-cs/postman-insights-onboarding-action@v0
+      env:
+        POSTMAN_TEAM_ID: ${{ inputs.postman-team-id }}
       with:
         project-name: ${{ inputs.project-name }}
         workspace-id: ${{ steps.bootstrap.outputs.workspace-id }}

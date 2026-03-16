@@ -4,6 +4,7 @@ Public open-alpha composite GitHub Action that orchestrates Postman onboarding b
 
 - `postman-cs/postman-bootstrap-action@v0`
 - `postman-cs/postman-repo-sync-action@v0`
+- `postman-cs/postman-insights-onboarding-action@v0` (optional, when `enable-insights: true`)
 
 This is the primary partner-facing entrypoint for the open-alpha suite.
 
@@ -90,8 +91,9 @@ Even when reusing an existing `spec-id`, the composite action still requires `sp
 | `system-env-map-json` | `{}` | Map of environment slug to system environment ID. |
 | `governance-mapping-json` | `{}` | Map of domain to governance group name. |
 | `env-runtime-urls-json` | `{}` | Map of environment slug to runtime base URL. |
-| `postman-api-key` | | Required for bootstrap and repo sync Postman operations. |
-| `postman-access-token` | | Enables governance assignment and Bifrost integration work. |
+| `postman-api-key` | | Postman API key for bootstrap and sync. If omitted or invalid, a new key is generated from `postman-access-token` by the underlying actions. |
+| `postman-access-token` | | Enables governance assignment, Bifrost integration, and API key generation fallback. |
+| `postman-team-id` | | Explicit Postman team ID. Auto-derived from `postman-api-key` via `/me` when omitted. Passed as `POSTMAN_TEAM_ID` env to sub-actions. |
 | `github-token` | | Enables repository variable persistence and generated commits. |
 | `gh-fallback-token` | | Optional fallback token for workflow and variable APIs. |
 | `github-auth-mode` | `github_token_first` | GitHub auth mode for repository APIs. |
@@ -102,16 +104,26 @@ Even when reusing an existing `spec-id`, the composite action still requires `sp
 | `enable-insights` | `false` | When `true`, chains `postman-cs/postman-insights-onboarding-action@v0` after bootstrap and repo sync. |
 | `integration-backend` | `bifrost` | Current public open-alpha backend. |
 
-> **Note:** Team ID is automatically derived from `postman-api-key` by the underlying actions. There is no explicit team ID input on this composite action.
+### Team ID derivation
+
+Team ID is automatically derived from `postman-api-key` by the underlying actions via the Postman `/me` API. If you need to override this (for example, when using an org-mode token that spans multiple teams), pass `postman-team-id` explicitly. The value is injected as the `POSTMAN_TEAM_ID` environment variable for all sub-action steps.
+
+### API key auto-creation
+
+When `postman-api-key` is omitted or invalid, the underlying bootstrap and repo-sync actions will attempt to generate a new API key using `postman-access-token` via the Bifrost identity service. The generated key is automatically persisted to the repository's `POSTMAN_API_KEY` secret when a GitHub token is available.
+
+### Org-mode Bifrost headers
+
+The underlying actions include the `x-entity-team-id` header on Bifrost proxy calls only when a team ID is resolved. For non-org-mode tokens, omit `postman-team-id` and ensure `POSTMAN_TEAM_ID` is not set in the environment so the header is excluded.
 
 ### Obtaining `postman-api-key`
 
-The `postman-api-key` is a Postman API key (PMAK) used for all standard Postman API operations — creating workspaces, uploading specs, generating collections, exporting artifacts, and managing environments.
+The `postman-api-key` is a Postman API key (PMAK) used for all standard Postman API operations -- creating workspaces, uploading specs, generating collections, exporting artifacts, and managing environments.
 
 **To generate one:**
 
 1. Open the Postman desktop app or web UI.
-2. Go to **Settings** (gear icon) → **Account Settings** → **API Keys**.
+2. Go to **Settings** (gear icon) > **Account Settings** > **API Keys**.
 3. Click **Generate API Key**, give it a label, and copy the key (starts with `PMAK-`).
 4. Set it as a GitHub secret:
    ```bash
@@ -122,9 +134,9 @@ The `postman-api-key` is a Postman API key (PMAK) used for all standard Postman 
 
 ### Obtaining `postman-access-token` (Open Alpha)
 
-> **⚠️ Open-alpha limitation:** The `postman-access-token` input requires a manually-extracted session token. There is currently no public API to exchange a Postman API key (PMAK) for an access token programmatically. This manual step will be eliminated before GA.
+> **Open-alpha limitation:** The `postman-access-token` input requires a manually-extracted session token. There is currently no public API to exchange a Postman API key (PMAK) for an access token programmatically. This manual step will be eliminated before GA.
 
-The `postman-access-token` is a Postman session token (`x-access-token`) required for internal API operations that the standard PMAK API key cannot perform — specifically workspace ↔ repo git sync (Bifrost), governance group assignment, and system environment associations. Without it, those steps are silently skipped during the onboarding pipeline.
+The `postman-access-token` is a Postman session token (`x-access-token`) required for internal API operations that the standard PMAK API key cannot perform -- specifically workspace-to-repo git sync (Bifrost), governance group assignment, and system environment associations. Without it, those steps are silently skipped during the onboarding pipeline.
 
 **To obtain and configure the token:**
 
@@ -151,7 +163,7 @@ The `postman-access-token` is a Postman session token (`x-access-token`) require
 
 > **Important:** This token is session-scoped and will expire. When it does, operations that depend on it (workspace linking, governance, system environment associations) will silently degrade. You will need to repeat the login and secret update process. There is no automated refresh mechanism.
 
-> **Note:** `postman login --with-api-key` stores a PMAK — **not** the session token these APIs require. You must use the interactive browser login.
+> **Note:** `postman login --with-api-key` stores a PMAK -- **not** the session token these APIs require. You must use the interactive browser login.
 
 ## Output Mapping
 
@@ -163,7 +175,7 @@ The composite action wires:
 - Existing-repo passthrough inputs to `repo_sync`: `generate-ci-workflow` and `ci-workflow-path`.
 - When `enable-insights: true`, the Insights onboarding step runs after repo sync using the workspace ID from bootstrap.
 
-See [action.yml](/Users/jaredboynton/__devlocal/postman-api-onboarding-action/action.yml) for exact step mappings.
+See [action.yml](action.yml) for exact step mappings.
 
 ## Local Development
 
@@ -182,4 +194,4 @@ npm test
 
 This composite interface is backend-neutral and only passes stable inputs and outputs between bootstrap and repo-sync. `integration-backend` defaults to `bifrost` now, and future REST migration should occur inside the lower-level actions without changing this composite contract.
 
-Migration details are documented in [REST_MIGRATION_SEAM.md](/Users/jaredboynton/__devlocal/postman-api-onboarding-action/REST_MIGRATION_SEAM.md).
+Migration details are documented in [REST_MIGRATION_SEAM.md](REST_MIGRATION_SEAM.md).

@@ -1,6 +1,6 @@
 # REST Migration Seam
 
-This beta suite uses `integration-backend=bifrost` by default, but callers should not need to change their workflow syntax when the backend moves to REST.
+This open-alpha suite uses `integration-backend=bifrost` by default, but callers should not need to change their workflow syntax when the backend moves to REST.
 
 ## Contract Invariants
 
