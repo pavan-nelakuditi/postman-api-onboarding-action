@@ -88,11 +88,11 @@ inputs:
   committer-name:
     description: Commit author name for generated sync commits.
     required: false
-    default: Postman FDE
+    default: Postman CSE
   committer-email:
     description: Commit author email for generated sync commits.
     required: false
-    default: fde@postman.com
+    default: help@postman.com
   enable-insights:
     description: Whether to enable Postman Insights.
     required: false

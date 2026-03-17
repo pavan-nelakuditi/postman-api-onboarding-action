@@ -154,7 +154,8 @@ describe('postman-api-onboarding-action composite contract', () => {
         'committer-email',
         'enable-insights',
         'cluster-name',
-        'integration-backend'
+        'integration-backend',
+        'org-mode'
       ]);
     });
 
@@ -362,14 +363,14 @@ describe('postman-api-onboarding-action composite contract', () => {
       expect(manifest.inputs['github-auth-mode']?.default).toBe('github_token_first');
     });
 
-    it('committer-name defaults to Postman FDE', () => {
+    it('committer-name defaults to Postman CSE', () => {
       const manifest = loadManifest();
-      expect(manifest.inputs['committer-name']?.default).toBe('Postman FDE');
+      expect(manifest.inputs['committer-name']?.default).toBe('Postman CSE');
     });
 
-    it('committer-email defaults to fde@postman.com', () => {
+    it('committer-email defaults to help@postman.com', () => {
       const manifest = loadManifest();
-      expect(manifest.inputs['committer-email']?.default).toBe('fde@postman.com');
+      expect(manifest.inputs['committer-email']?.default).toBe('help@postman.com');
     });
 
     it('JSON map inputs default to empty object', () => {

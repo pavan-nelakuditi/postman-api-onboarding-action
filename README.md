@@ -100,11 +100,12 @@ Even when reusing an existing `spec-id`, the composite action still requires `sp
 | `github-auth-mode` | `github_token_first` | GitHub auth mode for repository APIs. |
 | `repo-write-mode` | `commit-and-push` | Repo mutation mode passed to repo sync. |
 | `current-ref` | | Optional explicit ref override for detached checkouts. |
-| `committer-name` | `Postman FDE` | Commit author name for generated sync commits. |
-| `committer-email` | `fde@postman.com` | Commit author email for generated sync commits. |
+| `committer-name` | `Postman CSE` | Commit author name for generated sync commits. |
+| `committer-email` | `help@postman.com` | Commit author email for generated sync commits. |
 | `enable-insights` | `false` | When `true`, chains `postman-cs/postman-insights-onboarding-action@v0` after bootstrap and repo sync. |
 | `cluster-name` | | Optional Insights cluster name passed to the downstream Insights onboarding step. |
 | `integration-backend` | `bifrost` | Current public open-alpha backend. |
+| `org-mode` | `false` | When `true`, includes `x-entity-team-id` header in Bifrost proxy calls. Non-org teams must omit this header. |
 
 ### Team ID derivation
 
