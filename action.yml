@@ -104,6 +104,10 @@ inputs:
     description: Integration backend used to coordinate onboarding phases.
     required: false
     default: bifrost
+  org-mode:
+    description: Whether the Postman team uses org-mode. When true, x-entity-team-id header is included in Bifrost proxy calls. Non-org teams must omit this header.
+    required: false
+    default: 'false'
 outputs:
   integration-backend:
     description: Resolved integration backend for the onboarding run.
@@ -190,6 +194,7 @@ runs:
         github-token: ${{ inputs.github-token }}
         gh-fallback-token: ${{ inputs.gh-fallback-token }}
         github-auth-mode: ${{ inputs.github-auth-mode }}
+        org-mode: ${{ inputs.org-mode }}
         integration-backend: ${{ inputs.integration-backend }}
     - id: insights_onboarding
       if: inputs.enable-insights == 'true'
