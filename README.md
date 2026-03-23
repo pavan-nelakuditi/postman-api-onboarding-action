@@ -17,6 +17,7 @@ For existing services, the composite action can target an existing workspace/spe
 - Bootstrap outputs are explicitly mapped into repo-sync inputs in `action.yml`.
 - Final outputs are surfaced from the two lower-level actions without exposing internal step mode controls.
 - Collection artifacts are exported in the Postman Collection v3 multi-file YAML directory structure (produced during the repo-sync step).
+- Workspace-to-repository linking supports both GitHub and GitLab (cloud and self-hosted) URLs via Bifrost.
 
 ## Usage
 
