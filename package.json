@@ -1,8 +1,15 @@
 {
-  "name": "postman-api-onboarding-action",
-  "version": "0.1.0-alpha.0",
+  "name": "@postman-cse/onboarding-api",
+  "version": "0.10.1",
   "description": "Public open-alpha composite Postman API onboarding GitHub Action.",
-  "private": true,
+  "files": [
+    "action.yml",
+    "README.md",
+    "REST_MIGRATION_SEAM.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json"

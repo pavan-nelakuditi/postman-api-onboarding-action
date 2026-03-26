@@ -55,7 +55,7 @@ describe('postman-api-onboarding-action composite contract', () => {
 
     it('package.json name matches repository name', () => {
       const pkg = loadPackageJson();
-      expect(pkg.name).toBe('postman-api-onboarding-action');
+      expect(pkg.name).toBe('@postman-cse/onboarding-api');
     });
 
     it('description references open-alpha, not beta', () => {
@@ -84,9 +84,9 @@ describe('postman-api-onboarding-action composite contract', () => {
       expect(seam).not.toMatch(/\bbeta\b/i);
     });
 
-    it('package.json version uses alpha pre-release tag', () => {
+    it('package.json version is a publishable semver release', () => {
       const pkg = loadPackageJson();
-      expect(String(pkg.version)).toMatch(/alpha/);
+      expect(String(pkg.version)).toMatch(/^0\.\d+\.\d+$/);
       expect(String(pkg.version)).not.toMatch(/beta/);
     });
 
