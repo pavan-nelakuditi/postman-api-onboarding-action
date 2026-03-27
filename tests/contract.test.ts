@@ -134,6 +134,7 @@ describe('postman-api-onboarding-action composite contract', () => {
         'collection-sync-mode',
         'spec-sync-mode',
         'release-label',
+        'flow-manifest-url',
         'monitor-id',
         'mock-url',
         'monitor-cron',
@@ -233,9 +234,9 @@ describe('postman-api-onboarding-action composite contract', () => {
       const steps = manifest.runs.steps;
 
       expect(steps[0]?.id).toBe('bootstrap');
-      expect(steps[0]?.uses).toBe('postman-cs/postman-bootstrap-action@v0');
+      expect(steps[0]?.uses).toBe('pavan-nelakuditi/postman-bootstrap-action@flow_validation');
       expect(steps[1]?.id).toBe('repo_sync');
-      expect(steps[1]?.uses).toBe('postman-cs/postman-repo-sync-action@v0');
+      expect(steps[1]?.uses).toBe('pavan-nelakuditi/postman-repo-sync-action@main');
       expect(steps[2]?.id).toBe('insights_onboarding');
       expect(steps[2]?.uses).toBe('postman-cs/postman-insights-onboarding-action@v0');
     });
@@ -262,6 +263,14 @@ describe('postman-api-onboarding-action composite contract', () => {
       );
       expect(bootstrapStep?.with?.['contract-collection-id']).toBe(
         '${{ inputs.contract-collection-id }}'
+      );
+      expect(bootstrapStep?.with?.['collection-sync-mode']).toBe(
+        '${{ inputs.collection-sync-mode }}'
+      );
+      expect(bootstrapStep?.with?.['spec-sync-mode']).toBe('${{ inputs.spec-sync-mode }}');
+      expect(bootstrapStep?.with?.['release-label']).toBe('${{ inputs.release-label }}');
+      expect(bootstrapStep?.with?.['flow-manifest-url']).toBe(
+        '${{ inputs.flow-manifest-url }}'
       );
       expect(repoSyncStep?.with?.['workspace-id']).toBe(
         '${{ steps.bootstrap.outputs.workspace-id }}'

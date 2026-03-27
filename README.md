@@ -131,6 +131,7 @@ Even when reusing an existing `spec-id`, the composite action still requires `sp
 | `collection-sync-mode` | `refresh` | Collection lifecycle policy. `refresh` regenerates from latest spec (default), `reuse` keeps existing, `version` creates release-scoped collections. |
 | `spec-sync-mode` | `update` | Spec lifecycle policy. `update` keeps canonical spec current, `version` creates release-scoped spec. |
 | `release-label` | | Optional release label for versioned specs and collections. Derived from git tag/branch when omitted. |
+| `flow-manifest-url` | | Optional HTTPS URL to a `flow.yaml` manifest. The wrapper forwards it to bootstrap so baseline stays spec-generated while smoke and contract can be rebuilt from flow folders. |
 | `monitor-id` | | Existing smoke monitor ID. When set, the action validates and reuses this monitor instead of creating a new one. |
 | `mock-url` | | Existing mock server URL. When set, the action validates and reuses this mock instead of creating a new one. |
 | `monitor-cron` | `""` | Cron expression for monitor scheduling (e.g. `0 */6 * * *`). When empty, the monitor is created in a disabled state. |
@@ -169,6 +170,21 @@ Even when reusing an existing `spec-id`, the composite action still requires `sp
 ### Team ID derivation
 
 Pass `postman-team-id` only when a downstream org-mode Bifrost call needs an explicit team header. When omitted, the lower-level actions can leave `x-entity-team-id` unset and let Bifrost resolve team context from the access token.
+
+### Flow-driven smoke and contract collections
+
+When `flow-manifest-url` is omitted, the composite behaves exactly as before:
+
+- baseline, smoke, and contract are generated directly from the spec
+
+When `flow-manifest-url` is provided:
+
+- bootstrap still generates the baseline collection from the spec
+- bootstrap then rebuilds smoke from all `type: smoke` flows in the manifest
+- bootstrap rebuilds contract from all `type: contract` flows in the manifest
+- each flow becomes a folder in the target collection
+
+The wrapper itself does not interpret `flow.yaml`; it simply passes the raw manifest URL through to bootstrap and then lets repo-sync export whatever smoke/contract collections bootstrap produced.
 
 ### API key auto-creation
 

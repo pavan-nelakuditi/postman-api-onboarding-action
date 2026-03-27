@@ -32,6 +32,9 @@ inputs:
   release-label:
     description: Optional release label for versioned specs and collections. When omitted during versioned sync, derived from GitHub tag or branch metadata.
     required: false
+  flow-manifest-url:
+    description: Optional HTTPS URL to a flow.yaml manifest used to curate smoke and contract collections.
+    required: false
   monitor-id:
     description: Existing smoke monitor ID. When set, the action validates and reuses this monitor instead of creating a new one.
     required: false
@@ -198,7 +201,7 @@ runs:
   steps:
     - id: bootstrap
       name: Bootstrap Postman Assets
-      uses: postman-cs/postman-bootstrap-action@v0
+      uses: pavan-nelakuditi/postman-bootstrap-action@flow_validation
       env:
         POSTMAN_TEAM_ID: ${{ inputs.postman-team-id }}
       with:
@@ -212,6 +215,7 @@ runs:
         collection-sync-mode: ${{ inputs.collection-sync-mode }}
         spec-sync-mode: ${{ inputs.spec-sync-mode }}
         release-label: ${{ inputs.release-label }}
+        flow-manifest-url: ${{ inputs.flow-manifest-url }}
         domain: ${{ inputs.domain }}
         domain-code: ${{ inputs.domain-code }}
         requester-email: ${{ inputs.requester-email }}
@@ -223,7 +227,7 @@ runs:
         integration-backend: ${{ inputs.integration-backend }}
     - id: repo_sync
       name: Sync Repository and Workspace
-      uses: postman-cs/postman-repo-sync-action@v0
+      uses: pavan-nelakuditi/postman-repo-sync-action@main
       env:
         POSTMAN_TEAM_ID: ${{ inputs.postman-team-id }}
       with:
