@@ -211,7 +211,7 @@ runs:
   steps:
     - id: bootstrap
       name: Bootstrap Postman Assets
-      uses: postman-cs/postman-bootstrap-action@main
+      uses: pavan-nelakuditi/postman-bootstrap-action@codex/spec-id-debug
       env:
         POSTMAN_TEAM_ID: ${{ inputs.postman-team-id }}
       with:
@@ -236,7 +236,7 @@ runs:
         integration-backend: ${{ inputs.integration-backend }}
     - id: repo_sync
       name: Sync Repository and Workspace
-      uses: postman-cs/postman-repo-sync-action@main
+      uses: pavan-nelakuditi/postman-repo-sync-action@codex/spec-id-debug
       env:
         POSTMAN_TEAM_ID: ${{ inputs.postman-team-id }}
       with:
