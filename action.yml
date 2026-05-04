@@ -211,7 +211,7 @@ runs:
   steps:
     - id: bootstrap
       name: Bootstrap Postman Assets
-      uses: postman-cs/postman-bootstrap-action@13ccbf78f519cdb0d18714f7b339b6f09ff460d7
+      uses: postman-cs/postman-bootstrap-action@501f1fc5c630425cbbdd1c13f8b56a592cfedd26
       env:
         POSTMAN_TEAM_ID: ${{ inputs.postman-team-id }}
       with:
