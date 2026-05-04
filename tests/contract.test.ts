@@ -238,7 +238,7 @@ describe('postman-api-onboarding-action composite contract', () => {
 
       expect(steps[0]?.id).toBe('bootstrap');
       expect(steps[0]?.uses).toBe(
-        'postman-cs/postman-bootstrap-action@main'
+        'postman-cs/postman-bootstrap-action@13ccbf78f519cdb0d18714f7b339b6f09ff460d7'
       );
       expect(steps[1]?.id).toBe('repo_sync');
       expect(steps[1]?.uses).toBe(
